@@ -22,12 +22,12 @@
        interface:
          TenGigabitEthernet:
            name: "1/0/1"
-           description: My description
+           description: TenGigabitEthernet 1/0/1 connected to IXIA5 1/1
     register: myoutput
 
   - debug: var=myoutput.stdout_lines
 
-  - name: Configure STP etc.,
+  - name: Configure STP, VTP,  etc.,
     iosxe_netconf_yml:
       provider: "{{ provider }}"
       commands:
@@ -38,7 +38,9 @@
           message:
             time: 11
         vtp:
-          domain: test
+          domain: ngwc
+          mode:
+           "device-mode": transparent
     register: myoutput
 
   - debug: var=myoutput.stdout_lines
