@@ -185,10 +185,7 @@ ok: [172.25.209.236] => {
 
 PLAY RECAP *********************************************************************
 172.25.209.236             : ok=6    changed=0    unreachable=0    failed=0   
-
-$ 
-$ 
-$
+```
 
 ## IOSXE example 2: Playbook using config CLI
 
@@ -371,7 +368,7 @@ PLAY RECAP *********************************************************************
 
 ### Sample run
 
-```$ 
+```
 $ cat /home/cisco/ansible/test/samples/iosxe_netconf_yml.yml
 - hosts: myswitches
   gather_facts: no
