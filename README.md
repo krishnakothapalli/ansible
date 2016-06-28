@@ -29,21 +29,31 @@ Design Principles
    * Be the easiest IT automation system to use, ever.
   
 
-# IOSXE Example Platbooks
+# IOSXE Example Playbooks
 
 
-## Sample hosts files
+## Sample database (hosts file)
 
 ```
-$ more /home/cisco/hosts
+$ cat /home/cisco/hosts
 [myswitches]
 172.25.209.236 hostname="Gladiator48-2033KK"
 ```
 
-## IOSXE example 1: Playbook using CLI
+## Sample credentials file
 
 ```
-$ more /home/cisco/ansible/test/samples/iosxe_command.yml | cat
+$ cat /home/cisco/secrets.yml 
+creds:
+  username: admin
+  password: admin
+  auth_pass:
+```
+ 
+## Example 1: Playbook using IOSXE Exec CLI 
+
+```
+$ cat /home/cisco/ansible/test/samples/iosxe_command.yml 
 ---
 - hosts: myswitches
   gather_facts: no
@@ -79,11 +89,9 @@ $ more /home/cisco/ansible/test/samples/iosxe_command.yml | cat
     register: myoutput
 
   - debug: var=myoutput.stdout_lines
-
 ```
 
-
-#### IOSXE example 1: Playbook using CLI : Sample run
+#### Sample run
 
 ```
 $ ansible/bin/ansible-playbook  -i /home/cisco/hosts /home/cisco/ansible/test/samples/iosxe_command.yml 
@@ -187,7 +195,7 @@ PLAY RECAP *********************************************************************
 172.25.209.236             : ok=6    changed=0    unreachable=0    failed=0   
 ```
 
-## IOSXE example 2: Playbook using config CLI
+## Example 2: Playbook using IOSXE config CLI
 
 ```
 $ cat /home/cisco/ansible/test/samples/iosxe_config.yml 
@@ -284,7 +292,7 @@ PLAY RECAP *********************************************************************
 172.25.209.236             : ok=5    changed=3    unreachable=0    failed=0   
 ```
 
-## IOSXE example 3: Playbook using NETCONF XML configuration
+## Example 3: Playbook using IOSXE NETCONF/YANG XML configuration
 
 ```
 $ cat /home/cisco/ansible/test/samples/iosxe_netconf_xml.yml
@@ -357,16 +365,16 @@ TASK [DEFINE PROVIDER] *********************************************************
 ok: [172.25.209.236]
 
 TASK [Configure interfaces] ****************************************************
-fatal: [172.25.209.236]: FAILED! => {"changed": false, "failed": true, "msg": "error netconf {'info': '<?xml version=\"1.0\" encoding=\"UTF-8\"?><error-info xmlns=\"urn:ietf:params:xml:ns:netconf:base:1.0\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\"><session-id>0</session-id>\\n</error-info>\\n', 'severity': 'error', 'tag': 'in-use', 'path': None, 'message': None, 'type': 'application'} XML request:<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n            <config xmlns:xc=\"urn:ietf:params:xml:ns:netconf:base:1.0\">\n              <native xmlns=\"http://cisco.com/ns/yang/ned/ios\">\n<interface>\n  <TenGigabitEthernet>\n    <name>1/0/1</name>\n    <description>TenGigabitEthernet 1/0/1 connected to IXIA5 1/1</description>\n  </TenGigabitEthernet>\n</interface>\n\n              </native>\n            </config>\n            "}
+changed: [172.25.209.236]
 
-NO MORE HOSTS LEFT *************************************************************
-	to retry, use: --limit @/home/cisco/ansible/test/samples/iosxe_netconf_xml.retry
+TASK [Configure STP, VTP,  etc.,] **********************************************
+changed: [172.25.209.236]
 
 PLAY RECAP *********************************************************************
-172.25.209.236             : ok=2    changed=0    unreachable=0    failed=1   
+172.25.209.236             : ok=4    changed=2    unreachable=0    failed=0   
 ```
 
-### Sample run
+## Example 4: Playbook using IOSXE NETCONF/YANG YML configuration
 
 ```
 $ cat /home/cisco/ansible/test/samples/iosxe_netconf_yml.yml
@@ -416,13 +424,12 @@ $ cat /home/cisco/ansible/test/samples/iosxe_netconf_yml.yml
     register: myoutput
 
   - debug: var=myoutput.stdout_lines
-
 ```
 
-## IOSXE example 4: Playbook using NETCONF YML configuration
+### Sample run
 
 ```
-$ ansible/bin/ansible-playbook   -i /home/cisco/hosts /home/cisco/ansible/test/samples/iosxe_netconf_yml.yml
+$ ansible/bin/ansible-playbook  -i /home/cisco/hosts /home/cisco/ansible/test/samples/iosxe_netconf_yml.yml 
 
 PLAY [myswitches] **************************************************************
 
@@ -435,20 +442,9 @@ ok: [172.25.209.236]
 TASK [Configure interfaces] ****************************************************
 changed: [172.25.209.236]
 
-TASK [debug] *******************************************************************
-ok: [172.25.209.236] => {
-    "myoutput.stdout_lines": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n            <config xmlns:xc=\"urn:ietf:params:xml:ns:netconf:base:1.0\">\n              <native xmlns=\"http://cisco.com/ns/yang/ned/ios\">\n<interface><TenGigabitEthernet><name>1/0/1</name><description>TenGigabitEthernet 1/0/1 connected to IXIA5 1/1</description></TenGigabitEthernet></interface>\n              </native>\n            </config>\n            "
-}
-
 TASK [Configure STP, VTP,  etc.,] **********************************************
 changed: [172.25.209.236]
 
-TASK [debug] *******************************************************************
-ok: [172.25.209.236] => {
-    "myoutput.stdout_lines": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n            <config xmlns:xc=\"urn:ietf:params:xml:ns:netconf:base:1.0\">\n              <native xmlns=\"http://cisco.com/ns/yang/ned/ios\">\n<vtp><domain>ngwc</domain><mode><device-mode>transparent</device-mode></mode></vtp><spanning-tree><backbonefast></backbonefast><mode>mst</mode></spanning-tree><udld><message><time>11</time></message></udld>\n              </native>\n            </config>\n            "
-}
-
 PLAY RECAP *********************************************************************
-172.25.209.236             : ok=6    changed=2    unreachable=0    failed=0   
-
+172.25.209.236             : ok=4    changed=2    unreachable=0    failed=0   
 ```
