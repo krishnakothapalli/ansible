@@ -193,10 +193,7 @@ $
 ## IOSXE example 2: Playbook using config CLI
 
 ```
-$ cat /home/cisco/hosts /home/cisco/ansible/test/samples/iosxe_config.yml 
-[myswitches]
-#172.21.228.177
-172.25.209.236 hostname="Gladiator48-2033KK"
+$ cat /home/cisco/ansible/test/samples/iosxe_config.yml 
 ---
 - hosts: myswitches
   gather_facts: no
