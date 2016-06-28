@@ -54,11 +54,17 @@ Ansible was created by [Michael DeHaan](https://github.com/mpdehaan) (michael.de
 
 Ansible is sponsored by [Ansible, Inc](http://ansible.com)
 
-* IOSXE Example
-test
-** Example 1
+IOSXE Example
+================
 test
 
-** Example 2
+Example 1
+================
+================
+test
+
+Example 2
+================
+================
 test
 
