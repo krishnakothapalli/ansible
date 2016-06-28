@@ -4,10 +4,10 @@
   connection: local
 
   tasks:
-  - name: OBTAIN LOGIN CREDENTIALS
+  - name: Obtain login credentials
     include_vars: /home/cisco/secrets.yml
 
-  - name: DEFINE PROVIDER
+  - name: Define provider
     set_fact:
       provider:
         host: "{{ inventory_hostname }}"
@@ -15,21 +15,21 @@
         password: "{{ creds['password'] }}"
         auth_pass: "{{ creds['auth_pass'] }}"
 
-  - name: RUN SHOW INTERFACES COMMANDS
+  - name: Display version
+    iosxe_command:
+      provider: "{{ provider }}"
+      commands:
+        - show version
+    register: myoutput
+
+  - debug: var=myoutput.stdout_lines
+
+  - name: Display interfaces
     iosxe_command:
       provider: "{{ provider }}"
       commands:
         - show ip interface brief
         - show interfaces
-    register: myoutput
-
-  - debug: var=myoutput.stdout_lines
-
-  - name: RUN 'SHOW VERSION'
-    iosxe_command:
-      provider: "{{ provider }}"
-      commands:
-        - show version
     register: myoutput
 
   - debug: var=myoutput.stdout_lines

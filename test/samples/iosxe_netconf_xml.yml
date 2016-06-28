@@ -1,0 +1,53 @@
+- hosts: myswitches
+  gather_facts: no
+  connection: local
+
+  tasks:
+  - name: OBTAIN LOGIN CREDENTIALS
+    include_vars: /home/cisco/secrets.yml
+
+  - name: DEFINE PROVIDER
+    set_fact:
+      provider:
+        host: "{{ inventory_hostname }}"
+        username: "{{ creds['username'] }}"
+        password: "{{ creds['password'] }}"
+        auth_pass: "{{ creds['auth_pass'] }}"
+        port: 830
+
+  - name: Configure interfaces
+    iosxe_netconf_xml:
+      provider: "{{ provider }}"
+      commands: |
+        <interface>
+          <TenGigabitEthernet>
+            <name>1/0/1</name>
+            <description>TenGigabitEthernet 1/0/1 connected to IXIA5 1/1</description>
+          </TenGigabitEthernet>
+        </interface>
+    register: myoutput
+
+  # - debug: var=myoutput.stdout_lines
+
+  - name: Configure STP, VTP,  etc.,
+    iosxe_netconf_xml:
+      provider: "{{ provider }}"
+      commands: |
+          <vtp>
+           <domain>ngwc</domain>
+            <mode>
+              <device-mode>transparent</device-mode>
+            </mode>
+          </vtp>
+          <spanning-tree>
+           <backbonefast></backbonefast>
+           <mode>mst</mode>
+          </spanning-tree>
+          <udld>
+           <message>
+            <time>11</time>
+           </message>
+          </udld>
+    register: myoutput
+
+  # - debug: var=myoutput.stdout_lines
