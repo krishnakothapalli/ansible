@@ -1,0 +1,61 @@
+---
+- hosts: myswitches
+  gather_facts: no
+  connection: local
+
+  tasks:
+  - name: Obtain login credentials
+    include_vars: /home/cisco/secrets.yml
+
+  - name: Define provider
+    set_fact:
+      provider:
+        host: "{{ inventory_hostname }}"
+        username: "{{ creds['username'] }}"
+        password: "{{ creds['password'] }}"
+        auth_pass: "{{ creds['auth_pass'] }}"
+
+  - name: Configure hostname
+    ios_config:
+        provider: "{{ provider }}"
+        lines:
+           - hostname "{{ hostname }}"
+    
+  - name: Configure Interfaces
+    ios_config:
+      provider: "{{ provider }}"
+      lines:
+         - interface Te1/0/6
+         -   switchport access vlan 14
+         -   switchport mode access
+
+  - name: Configure ACLs
+    ios_config:
+      provider: "{{ provider }}"
+      lines:
+        - 10 permit ip host 1.1.1.1 any log
+        - 20 permit ip host 2.2.2.2 any log
+        - 30 permit ip host 3.3.3.3 any log
+        - 40 permit ip host 4.4.4.4 any log
+        - 50 permit ip host 5.5.5.5 any log
+      parents: ['ip access-list extended TEST']
+      before: ['no ip access-list extended TEST']
+      match: exact
+      
+    ios_config:
+       provider: "{{ provider }}"
+       lines:
+         - ip access-list extended ACL-DEFAULT
+         -   remark DHCP
+         -   permit udp any eq bootpc any eq bootps
+         -   remark DNS
+         -   permit udp any any eq domain
+         -   remark TFTP
+         -   permit udp any any eq tftp
+         -   remark Allow HTTP to ISE 
+         -   permit tcp any host 150.3.100.102 gt 0
+         -   permit udp any host 150.3.100.102 gt 0
+         -   deny ip any any
+         -   deny icmp any any
+       parents: ['ip access-list extended ACL-DEFAULT']
+       before: ['no ip access-list extended ACL-DEFAULT']

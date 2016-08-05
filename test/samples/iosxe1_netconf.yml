@@ -1,0 +1,61 @@
+- hosts: myswitches
+  gather_facts: no
+  connection: local
+
+  tasks:
+  - name: OBTAIN LOGIN CREDENTIALS
+    include_vars: /home/cisco/secrets.yml
+
+  - name: DEFINE PROVIDER
+    set_fact:
+      provider:
+        host: "{{ inventory_hostname }}"
+        username: "{{ creds['username'] }}"
+        password: "{{ creds['password'] }}"
+        auth_pass: "{{ creds['auth_pass'] }}"
+        port: 830
+
+
+  - name: Configure STP, VTP,  etc.,
+    netconf_config:
+      #provider: "{{ provider }}"
+      username: "{{ creds['username'] }}"
+      password: "{{ creds['password'] }}"
+      host: "{{ inventory_hostname }}"
+      xml: |
+          <vtp>
+           <domain>ngwc</domain>
+            <mode>
+              <device-mode>transparent</device-mode>
+            </mode>
+          </vtp>
+          <spanning-tree>
+           <backbonefast></backbonefast>
+           <mode>mst</mode>
+          </spanning-tree>
+          <udld>
+           <message>
+            <time>11</time>
+           </message>
+          </udld>
+    register: myoutput
+
+  - name: Configure interfaces
+    netconf_config:
+      #provider: "{{ provider }}"
+      username: "{{ creds['username'] }}"
+      password: "{{ creds['password'] }}"
+      host: "{{ inventory_hostname }}"
+      
+      xml: |
+        <interface>
+          <TenGigabitEthernet>
+            <name>1/0/1</name>
+            <description>TenGigabitEthernet 1/0/1 connected to IXIA5 1/1</description>
+          </TenGigabitEthernet>
+        </interface>
+    register: myoutput
+
+  # - debug: var=myoutput.stdout_lines
+
+  # - debug: var=myoutput.stdout_lines
