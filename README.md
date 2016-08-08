@@ -448,3 +448,277 @@ changed: [172.25.209.236]
 PLAY RECAP *********************************************************************
 172.25.209.236             : ok=4    changed=2    unreachable=0    failed=0   
 ```
+
+
+
+## Example 5: Playbook using NETCONF module
+
+```
+cisco@ubuntu:~$ cat /home/cisco/ansible/test/samples/iosxe1_netconf.yml
+- hosts: myswitches
+  gather_facts: no
+  connection: local
+
+  tasks:
+  - name: OBTAIN LOGIN CREDENTIALS
+    include_vars: /home/cisco/secrets.yml
+
+  - name: DEFINE PROVIDER
+    set_fact:
+      provider:
+        host: "{{ inventory_hostname }}"
+        username: "{{ creds['username'] }}"
+        password: "{{ creds['password'] }}"
+        auth_pass: "{{ creds['auth_pass'] }}"
+        port: 830
+
+
+  - name: Configure STP, VTP,  etc.,
+    netconf_config:
+      #provider: "{{ provider }}"
+      username: "{{ creds['username'] }}"
+      password: "{{ creds['password'] }}"
+      host: "{{ inventory_hostname }}"
+      xml: |
+          <vtp>
+           <domain>ngwc</domain>
+            <mode>
+              <device-mode>transparent</device-mode>
+            </mode>
+          </vtp>
+          <spanning-tree>
+           <backbonefast></backbonefast>
+           <mode>mst</mode>
+          </spanning-tree>
+          <udld>
+           <message>
+            <time>11</time>
+           </message>
+          </udld>
+    register: myoutput
+
+  - name: Configure interfaces
+    netconf_config:
+      #provider: "{{ provider }}"
+      username: "{{ creds['username'] }}"
+      password: "{{ creds['password'] }}"
+      host: "{{ inventory_hostname }}"
+      
+      xml: |
+        <interface>
+          <TenGigabitEthernet>
+            <name>1/0/1</name>
+            <description>TenGigabitEthernet 1/0/1 connected to IXIA5 1/1</description>
+          </TenGigabitEthernet>
+        </interface>
+    register: myoutput
+
+```
+
+### Sample run
+```
+cisco@ubuntu:~$ ansible/bin/ansible-playbook  -i /home/cisco/hosts /home/cisco/ansible/test/samples/iosxe1_netconf.yml
+
+PLAY [myswitches] **************************************************************
+
+TASK [OBTAIN LOGIN CREDENTIALS] ************************************************
+ok: [172.25.209.236]
+
+TASK [DEFINE PROVIDER] *********************************************************
+ok: [172.25.209.236]
+
+TASK [Configure STP, VTP,  etc.,] **********************************************
+ok: [172.25.209.236]
+
+TASK [Configure interfaces] ****************************************************
+ok: [172.25.209.236]
+
+PLAY RECAP *********************************************************************
+172.25.209.236             : ok=4    changed=0    unreachable=0    failed=0   
+
+```
+
+
+## Example 6: Playbook using IOS_COMMAND module
+
+```
+$ cat /home/cisco/ansible/test/samples/iosxe1_command.yml
+
+
+---
+- hosts: myswitches
+  gather_facts: no
+  connection: local
+
+  tasks:
+  - name: Obtain login credentials
+    include_vars: /home/cisco/secrets.yml
+
+  - name: Define provider
+    set_fact:
+      provider:
+        host: "{{ inventory_hostname }}"
+        username: "{{ creds['username'] }}"
+        password: "{{ creds['password'] }}"
+        auth_pass: "{{ creds['auth_pass'] }}"
+
+  - name: Show version
+    ios_command:
+      provider: "{{ provider }}"
+      commands:
+        - show version
+    register: myoutput
+
+  - debug: var=myoutput.stdout_lines
+
+  - name: Show interfaces
+    ios_command:
+      provider: "{{ provider }}"
+      commands:
+        - show ip interface brief
+        - show interfaces
+    register: myoutput
+
+  - debug: var=myoutput.stdout_lines
+
+```
+
+### Sample run
+```
+cisco@ubuntu:~$ ansible/bin/ansible-playbook  -i /home/cisco/hosts /home/cisco/ansible/test/samples/iosxe1_command.yml
+
+PLAY [myswitches] **************************************************************
+
+TASK [Obtain login credentials] ************************************************
+ok: [172.25.209.236]
+
+TASK [Define provider] *********************************************************
+ok: [172.25.209.236]
+
+TASK [Show version] ************************************************************
+ok: [172.25.209.236]
+
+TASK [debug] *******************************************************************
+ok: [172.25.209.236] => {
+    "myoutput.stdout_lines": [
+        [
+            "Cisco IOS Software [Denali], Catalyst L3 Switch Software (CAT3K_CAA-UNIVERSALK9-M), Experimental Version 16.3(20160619:172453) [v163_throttle-BLD-BLD_V163_THROTTLE_LATEST_20160619_170158 106]", 
+            "Copyright (c) 1986-2016 by Cisco Systems, Inc.", 
+            "Compiled Sun 19-Jun-16 10:58 by mcpre", 
+            "", 
+...
+TASK [Show interfaces] *********************************************************
+ok: [172.25.209.236]
+
+TASK [debug] *******************************************************************
+ok: [172.25.209.236] => {
+    "myoutput.stdout_lines": [
+        [
+            "Interface              IP-Address      OK? Method Status                Protocol", 
+            "Vlan1                  unassigned      YES NVRAM  ********istratively down down    ", 
+            "GigabitEthernet0/0     172.25.209.236  YES NVRAM  up                    up      ", 
+            "Fo1/1/1                unassigned      YES unset  down                  down    ", 
+
+
+```
+
+
+
+
+## Example 7: Playbook using ios_config module
+
+```
+$ cat /home/cisco/ansible/test/samples/iosxe1_config.yml
+---
+- hosts: myswitches
+  gather_facts: no
+  connection: local
+
+  tasks:
+  - name: Obtain login credentials
+    include_vars: /home/cisco/secrets.yml
+
+  - name: Define provider
+    set_fact:
+      provider:
+        host: "{{ inventory_hostname }}"
+        username: "{{ creds['username'] }}"
+        password: "{{ creds['password'] }}"
+        auth_pass: "{{ creds['auth_pass'] }}"
+
+  - name: Configure hostname
+    ios_config:
+        provider: "{{ provider }}"
+        lines:
+           - hostname "{{ hostname }}"
+    
+  - name: Configure Interfaces
+    ios_config:
+      provider: "{{ provider }}"
+      lines:
+         - interface Te1/0/6
+         -   switchport access vlan 14
+         -   switchport mode access
+
+  - name: Configure ACLs
+    ios_config:
+      provider: "{{ provider }}"
+      lines:
+        - 10 permit ip host 1.1.1.1 any log
+        - 20 permit ip host 2.2.2.2 any log
+        - 30 permit ip host 3.3.3.3 any log
+        - 40 permit ip host 4.4.4.4 any log
+        - 50 permit ip host 5.5.5.5 any log
+      parents: ['ip access-list extended TEST']
+      before: ['no ip access-list extended TEST']
+      match: exact
+      
+    ios_config:
+       provider: "{{ provider }}"
+       lines:
+         - ip access-list extended ACL-DEFAULT
+         -   remark DHCP
+         -   permit udp any eq bootpc any eq bootps
+         -   remark DNS
+         -   permit udp any any eq domain
+         -   remark TFTP
+         -   permit udp any any eq tftp
+         -   remark Allow HTTP to ISE 
+         -   permit tcp any host 150.3.100.102 gt 0
+         -   permit udp any host 150.3.100.102 gt 0
+         -   deny ip any any
+         -   deny icmp any any
+       parents: ['ip access-list extended ACL-DEFAULT']
+       before: ['no ip access-list extended ACL-DEFAULT']
+```
+
+### Sample run
+```
+cisco@ubuntu:~$ ansible/bin/ansible-playbook  -i /home/cisco/hosts /home/cisco/ansible/test/samples/iosxe1_config.yml
+ [WARNING]: While constructing a mapping from
+/home/cisco/ansible/test/samples/iosxe1_config.yml, line 32, column 5, found a
+duplicate dict key (ios_config).  Using last defined value only.
+
+PLAY [myswitches] **************************************************************
+
+TASK [Obtain login credentials] ************************************************
+ok: [172.25.209.236]
+
+TASK [Define provider] *********************************************************
+ok: [172.25.209.236]
+
+TASK [Configure hostname] ******************************************************
+changed: [172.25.209.236]
+
+TASK [Configure Interfaces] ****************************************************
+changed: [172.25.209.236]
+
+TASK [Configure ACLs] **********************************************************
+changed: [172.25.209.236]
+
+PLAY RECAP *********************************************************************
+172.25.209.236             : ok=5    changed=3    unreachable=0    failed=0   
+
+```
+
+
